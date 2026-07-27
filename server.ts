@@ -62,7 +62,7 @@ Make sure the content is age-appropriate, positive, safe, highly engaging for ch
 Respond ONLY with the JSON array.`;
 
       const response = await ai.models.generateContent({
-        model: "gemini-3.6-flash",
+        model: "gemini-2.5-flash",
         contents: prompt,
         config: {
           responseMimeType: "application/json",
@@ -73,7 +73,8 @@ Respond ONLY with the JSON array.`;
       const responseText = response.text || "[]";
       let parsed = [];
       try {
-        parsed = JSON.parse(responseText);
+        const cleanedText = responseText.replace(/```json\s*/gi, '').replace(/```\s*/g, '').trim();
+        parsed = JSON.parse(cleanedText);
       } catch (e) {
         console.error("Failed to parse Gemini JSON output:", responseText);
         return res.status(500).json({ error: "Failed to parse AI output." });
