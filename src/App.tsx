@@ -1,0 +1,173 @@
+import React, { useState, useEffect } from 'react';
+import { Book, BookConfig } from './types';
+import { generateBook } from './services/bookGenerator';
+import { getSavedBooks, saveBook, deleteSavedBook } from './services/storageService';
+import { Navbar } from './components/Navbar';
+import { HeroBanner } from './components/HeroBanner';
+import { BookForm } from './components/BookForm';
+import { BookPreview } from './components/BookPreview';
+import { TemplatesView } from './components/TemplatesView';
+import { MyBooksView } from './components/MyBooksView';
+import { PrintLayout } from './components/PrintLayout';
+import { PrintModal } from './components/PrintModal';
+
+export default function App() {
+  const [activeTab, setActiveTab] = useState<'create' | 'templates' | 'my-books' | 'preview'>('create');
+  const [activeBook, setActiveBook] = useState<Book | null>(null);
+  const [savedBooks, setSavedBooks] = useState<Book[]>([]);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [showPrintModal, setShowPrintModal] = useState(false);
+
+  // Initialize saved books and initial default experience
+  useEffect(() => {
+    const loaded = getSavedBooks();
+    setSavedBooks(loaded);
+
+    // Default initial book generation on first open so preview works out of the box
+    const initialConfig: BookConfig = {
+      category: 'alphabet',
+      language: 'english',
+      ageGroup: '3-4',
+      style: 'learning',
+      pageCount: 10,
+      includeCover: true,
+      includeGuide: false,
+      customTitle: 'My First Alphabet Book',
+      childName: ''
+    };
+
+    generateBook(initialConfig).then((defaultBook) => {
+      setActiveBook(defaultBook);
+    });
+  }, []);
+
+  const handleGenerate = async (config: BookConfig) => {
+    setIsGenerating(true);
+    try {
+      const newBook = await generateBook(config);
+      setActiveBook(newBook);
+      saveBook(newBook);
+      setSavedBooks(getSavedBooks());
+      setActiveTab('preview');
+    } catch (e) {
+      console.error('Failed to generate book', e);
+      alert('An error occurred while generating the book. Please try again.');
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const handleSelectTemplate = async (config: BookConfig) => {
+    setIsGenerating(true);
+    try {
+      const tplBook = await generateBook(config);
+      setActiveBook(tplBook);
+      saveBook(tplBook);
+      setSavedBooks(getSavedBooks());
+      setActiveTab('preview');
+    } catch (e) {
+      console.error('Failed to load template', e);
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const handleSaveToLibrary = (bookToSave: Book) => {
+    saveBook(bookToSave);
+    setSavedBooks(getSavedBooks());
+  };
+
+  const handleDeleteBook = (id: string) => {
+    const updated = deleteSavedBook(id);
+    setSavedBooks(updated);
+    if (activeBook && activeBook.id === id) {
+      setActiveBook(updated[0] || null);
+    }
+  };
+
+  const handlePrint = (bookToPrint?: Book) => {
+    if (bookToPrint) {
+      setActiveBook(bookToPrint);
+    }
+    setShowPrintModal(true);
+  };
+
+  return (
+    <div className="min-h-screen bg-slate-50 text-slate-800 font-sans selection:bg-indigo-100 flex flex-col justify-between">
+      {/* Printable A4 Layout for window.print() */}
+      {activeBook && <PrintLayout book={activeBook} />}
+
+      {/* Interactive Print Dialog Modal */}
+      {showPrintModal && activeBook && (
+        <PrintModal
+          book={activeBook}
+          onClose={() => setShowPrintModal(false)}
+        />
+      )}
+
+      {/* Main Web UI (Hidden during window.print via .no-print) */}
+      <div className="no-print flex-1 flex flex-col">
+        <Navbar
+          activeTab={activeTab}
+          setActiveTab={setActiveTab}
+          savedCount={savedBooks.length}
+          hasActiveBook={!!activeBook}
+          onPrintActiveBook={activeBook ? () => handlePrint() : undefined}
+        />
+
+        <main className="max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1">
+          {activeTab === 'create' && (
+            <div>
+              <HeroBanner />
+              <BookForm onGenerate={handleGenerate} isGenerating={isGenerating} />
+            </div>
+          )}
+
+          {activeTab === 'preview' && activeBook && (
+            <BookPreview
+              book={activeBook}
+              onUpdateBook={(updated) => {
+                setActiveBook(updated);
+                saveBook(updated);
+                setSavedBooks(getSavedBooks());
+              }}
+              onSaveToLibrary={handleSaveToLibrary}
+              onPrintBook={() => handlePrint()}
+            />
+          )}
+
+          {activeTab === 'templates' && (
+            <TemplatesView onSelectTemplate={handleSelectTemplate} />
+          )}
+
+          {activeTab === 'my-books' && (
+            <MyBooksView
+              books={savedBooks}
+              onOpenBook={(b) => {
+                setActiveBook(b);
+                setActiveTab('preview');
+              }}
+              onDeleteBook={handleDeleteBook}
+              onCreateNew={() => setActiveTab('create')}
+              onPrintBook={(b) => handlePrint(b)}
+            />
+          )}
+        </main>
+
+        {/* Footer */}
+        <footer className="no-print bg-white border-t border-slate-200 py-6 text-center text-xs text-slate-500">
+          <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-3">
+            <div className="flex items-center gap-2 font-bold text-slate-700">
+              <span>KidsBook AI</span>
+              <span>•</span>
+              <span className="font-medium text-slate-500">Create. Learn. Print.</span>
+            </div>
+            <p className="text-[11px] text-slate-400">
+              AI-powered printable learning books & educational worksheets for kids (Ages 2–7).
+            </p>
+          </div>
+        </footer>
+      </div>
+    </div>
+  );
+}

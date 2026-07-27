@@ -1,0 +1,6 @@
+{
+  "name": "KidsBook AI",
+  "description": "AI-powered printable learning books and educational worksheets for children.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
