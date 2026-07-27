@@ -3,13 +3,9 @@ import react from '@vitejs/plugin-react';
 import path from 'path';
 import {defineConfig} from 'vite';
 
-export default defineConfig(({ mode }) => {
-  const repoName = process.env.GITHUB_REPOSITORY
-    ? `/${process.env.GITHUB_REPOSITORY.split('/')[1]}/`
-    : '/Kidsbook-ai/';
-
+export default defineConfig(() => {
   return {
-    base: process.env.VITE_BASE_PATH || (mode === 'production' ? repoName : '/'),
+    base: './',
     plugins: [react(), tailwindcss()],
     resolve: {
       alias: {
