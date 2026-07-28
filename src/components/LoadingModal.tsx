@@ -7,12 +7,15 @@ interface LoadingModalProps {
 }
 
 const STEPS = [
-  { message: 'Preparing pages & learning themes...', icon: Sparkles },
-  { message: 'Creating fun learning activities...', icon: BookOpen },
-  { message: 'Generating educational tracing & guides...', icon: Layers },
-  { message: 'Building high-resolution A4 printable workbook...', icon: CheckCircle2 },
-  { message: 'Almost done! Finalizing book layout...', icon: Sparkles },
+  { message: 'Analyzing Topic & Setting Learning Objectives...', icon: Sparkles },
+  { message: 'Planning Lessons & Creating Outline...', icon: BookOpen },
+  { message: 'Creating Educational Pages & Activities...', icon: Layers },
+  { message: 'Writing Tracing Guides & Exercises...', icon: BookOpen },
+  { message: 'Performing Educational Quality Check...', icon: CheckCircle2 },
+  { message: 'Finalizing Printable A4 Worksheets...', icon: Sparkles },
+  { message: 'Book Ready!', icon: CheckCircle2 }
 ];
+
 
 export const LoadingModal: React.FC<LoadingModalProps> = ({ isOpen, categoryName }) => {
   const [currentStep, setCurrentStep] = useState(0);

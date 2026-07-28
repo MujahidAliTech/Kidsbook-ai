@@ -1,44 +1,125 @@
-import { CustomFallbackPage, getGenericCustomPages } from '../data/customFallback';
+import { Book, BookConfig } from '../types';
+import { buildCompleteBook } from './contentBuilder/bookBuilder';
+import { getLocalFallbackBook } from './fallbackContent/localFallbacks';
+import { cleanAndRepairJson, validateBookOutput } from './contentBuilder/qualityChecker';
 
-export interface CustomGenerationResult {
-  pages: CustomFallbackPage[];
+export interface BookGenerationResult {
+  book: Book;
   isAiGenerated: boolean;
   message?: string;
+  workflowStep?: string;
 }
 
-export async function generateCustomBookContent(
-  topic: string,
-  ageGroup: string,
-  language: string,
-  style: string,
-  pageCount: number
-): Promise<CustomGenerationResult> {
+// Memory Cache to prevent duplicate AI requests
+const bookCache = new Map<string, Book>();
+
+function getCacheKey(config: BookConfig): string {
+  return `${config.category}_${config.customTopic || ''}_${config.language}_${config.ageGroup}_${config.style}_${config.pageCount}_${config.childName || ''}`;
+}
+
+export async function generateAiBook(
+  config: BookConfig,
+  onProgress?: (step: string) => void
+): Promise<BookGenerationResult> {
+  const cacheKey = getCacheKey(config);
+  if (bookCache.has(cacheKey)) {
+    if (onProgress) onProgress('Book Ready! (Loaded from Cache)');
+    return {
+      book: bookCache.get(cacheKey)!,
+      isAiGenerated: true,
+      message: 'Generated using Gemini AI (Cached for optimal speed)'
+    };
+  }
+
   try {
-    const response = await fetch('/api/generate-custom', {
+    if (onProgress) onProgress('Analyzing Topic & Setting Learning Goals...');
+    await new Promise((r) => setTimeout(r, 200));
+
+    if (onProgress) onProgress('Planning Lessons & Creating Outline...');
+    await new Promise((r) => setTimeout(r, 200));
+
+    if (onProgress) onProgress('Creating Educational Pages & Activities...');
+
+    const response = await fetch('/api/generate-book', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ topic, ageGroup, language, style, pageCount }),
+      body: JSON.stringify({ config })
+    });
+
+    if (onProgress) onProgress('Writing Tracing Guides & Exercises...');
+
+    if (response.ok) {
+      const data = await response.json();
+      if (data.success && data.payload) {
+        if (onProgress) onProgress('Performing Educational Quality Check...');
+
+        let parsedPayload = data.payload;
+        if (typeof parsedPayload === 'string') {
+          try {
+            parsedPayload = cleanAndRepairJson(parsedPayload);
+          } catch (e) {
+            console.warn('Payload repair warning:', e);
+          }
+        }
+
+        const isValid = validateBookOutput(parsedPayload, config);
+        if (isValid) {
+          if (onProgress) onProgress('Finalizing Printable A4 Worksheets...');
+
+          const book = buildCompleteBook(config, parsedPayload, true);
+          bookCache.set(cacheKey, book);
+
+          if (onProgress) onProgress('Book Ready!');
+
+          return {
+            book,
+            isAiGenerated: true,
+            message: 'Generated using Gemini AI'
+          };
+        }
+      }
+    }
+  } catch (err) {
+    console.warn('AI API call unreachable or error. Switching to built-in template system:', err);
+  }
+
+  // Local Fallback if AI unavailable or invalid
+  if (onProgress) onProgress('Generating using built-in educational templates...');
+  await new Promise((r) => setTimeout(r, 300));
+
+  const fallbackBook = getLocalFallbackBook(config);
+  if (onProgress) onProgress('Book Ready!');
+
+  return {
+    book: fallbackBook,
+    isAiGenerated: false,
+    message: 'AI is temporarily unavailable. Generating using built-in educational templates.'
+  };
+}
+
+/**
+ * High-resolution AI Vector Outline Image generator for coloring pages
+ */
+export async function generateColoringImage(prompt: string): Promise<{ success: boolean; imageUrl?: string; message?: string }> {
+  try {
+    const response = await fetch('/api/generate-coloring-image', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prompt })
     });
 
     if (response.ok) {
       const data = await response.json();
-      if (data.success && Array.isArray(data.items) && data.items.length > 0) {
-        return {
-          pages: data.items,
-          isAiGenerated: true,
-          message: 'Generated using Gemini AI',
-        };
+      if (data.success && data.imageUrl) {
+        return { success: true, imageUrl: data.imageUrl };
       }
     }
-  } catch (err) {
-    console.warn('AI API call unreachable or error, falling back to built-in template library:', err);
+  } catch (err: any) {
+    console.warn('Coloring image generation failed:', err);
   }
 
-  // Fallback to local custom library
-  const fallbackPages = getGenericCustomPages(topic, pageCount);
   return {
-    pages: fallbackPages,
-    isAiGenerated: false,
-    message: 'Custom AI generation requires an AI API connection. Built-in educational templates are available now.',
+    success: false,
+    message: 'Image generation requires active AI connection.'
   };
 }

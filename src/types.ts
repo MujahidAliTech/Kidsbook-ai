@@ -8,6 +8,10 @@ export type Category =
   | 'vegetables'
   | 'colors'
   | 'shapes'
+  | 'story'
+  | 'phonics'
+  | 'vocabulary'
+  | 'worksheet'
   | 'custom';
 
 export type Language = 'english' | 'urdu' | 'bilingual';
@@ -22,7 +26,55 @@ export type BookStyle =
   | 'flashcard'
   | 'mixed';
 
-export type PageType = 'cover' | 'learning' | 'tracing' | 'coloring' | 'activity' | 'guide';
+export type PageType =
+  | 'cover'
+  | 'introduction'
+  | 'learning'
+  | 'vocabulary'
+  | 'tracing'
+  | 'writing'
+  | 'coloring'
+  | 'counting'
+  | 'matching'
+  | 'quiz'
+  | 'puzzle'
+  | 'story'
+  | 'review'
+  | 'certificate'
+  | 'guide'
+  | 'activity';
+
+export type Difficulty = 'easy' | 'medium' | 'hard';
+
+export interface LessonPlan {
+  learningObjectives: string[];
+  targetVocabulary: string[];
+  practiceGoals: string[];
+  reviewGoals: string[];
+  difficultyLevel: string;
+  expectedOutcome: string;
+}
+
+export interface QualityScore {
+  educationalQuality: number;
+  readability: number;
+  ageSuitability: number;
+  languageQuality: number;
+  activityQuality: number;
+  overallScore: number;
+  passed: boolean;
+}
+
+export interface QuizQuestion {
+  question: string;
+  options: string[];
+  answer: string;
+}
+
+export interface MatchingPair {
+  left: string;
+  right: string;
+}
 
 export interface BookPage {
   id: string;
@@ -45,6 +97,15 @@ export interface BookPage {
   options?: string[];
   correctAnswer?: string;
   isRtl?: boolean;
+  
+  // Extended AI Content fields
+  storyText?: string;
+  storyCharacters?: string[];
+  learningMessage?: string;
+  quizQuestions?: QuizQuestion[];
+  matchingPairs?: MatchingPair[];
+  parentTips?: string[];
+  sectionOutline?: string[];
 }
 
 export interface BookConfig {
@@ -58,6 +119,8 @@ export interface BookConfig {
   includeGuide: boolean;
   customTitle?: string;
   childName?: string;
+  difficulty?: Difficulty;
+  learningGoal?: string;
 }
 
 export interface Book {
@@ -71,4 +134,11 @@ export interface Book {
   createdAt: string;
   pages: BookPage[];
   config: BookConfig;
+  
+  // AI Metadata
+  isFavorite?: boolean;
+  isAiGenerated?: boolean;
+  qualityScore?: QualityScore;
+  lessonPlan?: LessonPlan;
 }
+

@@ -2,6 +2,7 @@ import express from "express";
 import path from "path";
 import { createServer as createViteServer } from "vite";
 import { GoogleGenAI } from "@google/genai";
+import { buildSystemInstruction, buildBookGenerationPrompt } from "./src/services/prompts/bookPrompts";
 
 async function startServer() {
   const app = express();
@@ -9,8 +10,63 @@ async function startServer() {
 
   app.use(express.json());
 
-  // API Route for AI-powered Custom Topic Book Generation
+  // API Route for Complete AI Educational Book Generation
+  app.post("/api/generate-book", async (req, res) => {
+    try {
+      const { config } = req.body;
+
+      if (!config) {
+        return res.status(400).json({ error: "Book configuration is required." });
+      }
+
+      const apiKey = process.env.GEMINI_API_KEY;
+      if (!apiKey || apiKey === "MY_GEMINI_API_KEY") {
+        return res.status(503).json({
+          error: "API_KEY_NOT_CONFIGURED",
+          message: "AI book generation requires an active Gemini API connection.",
+        });
+      }
+
+      const ai = new GoogleGenAI({
+        apiKey: apiKey,
+        httpOptions: {
+          headers: {
+            "User-Agent": "aistudio-build",
+          },
+        },
+      });
+
+      const systemInstruction = buildSystemInstruction();
+      const prompt = buildBookGenerationPrompt(config);
+
+      const response = await ai.models.generateContent({
+        model: "gemini-3.6-flash",
+        contents: prompt,
+        config: {
+          systemInstruction,
+          responseMimeType: "application/json",
+          temperature: 0.7,
+        },
+      });
+
+      const responseText = response.text || "{}";
+
+      return res.json({
+        success: true,
+        payload: responseText,
+      });
+    } catch (err: any) {
+      console.error("Error generating AI book:", err);
+      return res.status(500).json({
+        error: "GENERATION_FAILED",
+        message: err.message || "An unexpected error occurred during AI generation.",
+      });
+    }
+  });
+
+  // API Route for AI-powered Custom Topic Book Generation (Backwards Compatibility)
   app.post("/api/generate-custom", async (req, res) => {
+
     try {
       const { topic, ageGroup, language, style, pageCount } = req.body;
 

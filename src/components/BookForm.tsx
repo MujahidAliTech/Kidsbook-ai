@@ -20,6 +20,9 @@ export const BookForm: React.FC<Props> = ({ onGenerate, isGenerating }) => {
   const [customTitle, setCustomTitle] = useState('');
   const [childName, setChildName] = useState('');
 
+  const [difficulty, setDifficulty] = useState<'easy' | 'medium' | 'hard'>('medium');
+  const [learningGoal, setLearningGoal] = useState('');
+
   const handleCategorySelect = (cat: Category) => {
     setCategory(cat);
     if (cat === 'numbers1-10') setPageCount(10);
@@ -42,9 +45,12 @@ export const BookForm: React.FC<Props> = ({ onGenerate, isGenerating }) => {
       includeCover,
       includeGuide,
       customTitle,
-      childName
+      childName,
+      difficulty,
+      learningGoal: learningGoal.trim() || undefined
     });
   };
+
 
   return (
     <form
@@ -124,24 +130,66 @@ export const BookForm: React.FC<Props> = ({ onGenerate, isGenerating }) => {
 
         {/* Custom Topic Input */}
         {category === 'custom' && (
-          <div className="mt-3 p-4 bg-indigo-50/80 dark:bg-indigo-950/60 rounded-2xl border border-indigo-200 dark:border-indigo-800 animate-in fade-in duration-150">
-            <label className="block text-xs font-extrabold text-indigo-900 dark:text-indigo-200 mb-1.5">
-              Specify Custom Topic (e.g. Space Exploration, Dinosaurs, Vehicles, Good Manners)
-            </label>
-            <input
-              type="text"
-              value={customTopic}
-              onChange={(e) => setCustomTopic(e.target.value)}
-              placeholder="e.g. Vehicles, Space Exploration, Dinosaurs..."
-              className="w-full px-4 py-3 bg-white dark:bg-slate-900 border border-indigo-300 dark:border-indigo-700 rounded-xl text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-900 dark:text-white shadow-xs"
-              required
-            />
-            <p className="text-[11px] text-indigo-700 dark:text-indigo-300 font-medium mt-1.5 flex items-center gap-1">
+          <div className="mt-3 p-4 bg-indigo-50/80 dark:bg-indigo-950/60 rounded-2xl border border-indigo-200 dark:border-indigo-800 animate-in fade-in duration-150 space-y-3">
+            <div>
+              <label className="block text-xs font-extrabold text-indigo-900 dark:text-indigo-200 mb-1.5">
+                Specify Custom Topic or Select Quick Idea Below
+              </label>
+              <input
+                type="text"
+                value={customTopic}
+                onChange={(e) => setCustomTopic(e.target.value)}
+                placeholder="e.g. Dinosaurs, Solar System, Good Manners..."
+                className="w-full px-4 py-3 bg-white dark:bg-slate-900 border border-indigo-300 dark:border-indigo-700 rounded-xl text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-900 dark:text-white shadow-xs"
+                required
+              />
+            </div>
+
+            {/* Topic Ideas */}
+            <div>
+              <span className="text-[11px] font-bold text-indigo-800 dark:text-indigo-300 block mb-1.5">
+                Popular Educational Topics:
+              </span>
+              <div className="flex flex-wrap gap-1.5">
+                {[
+                  'Dinosaurs 🦕',
+                  'Vehicles 🚀',
+                  'Solar System 🪐',
+                  'Space Exploration 🌌',
+                  'Ocean Animals 🐬',
+                  'Birds 🦜',
+                  'Pakistan 🇵🇰',
+                  'Islamic Manners 🌙',
+                  'Healthy Food 🥦',
+                  'Safety Rules 🚦',
+                  'Weather & Seasons 🌧️',
+                  'Community Helpers 🧑‍🚒',
+                  'Professions 👩‍⚕️',
+                  'Sports & Games ⚽',
+                  'Shapes Around Us 📐'
+                ].map((idea) => {
+                  const cleanTopic = idea.split(' ')[0];
+                  return (
+                    <button
+                      type="button"
+                      key={idea}
+                      onClick={() => setCustomTopic(cleanTopic)}
+                      className="px-2.5 py-1 bg-white dark:bg-slate-900 hover:bg-indigo-100 dark:hover:bg-indigo-900 border border-indigo-200 dark:border-indigo-700 rounded-lg text-xs font-bold text-indigo-900 dark:text-indigo-200 transition-colors cursor-pointer"
+                    >
+                      {idea}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            <p className="text-[11px] text-indigo-700 dark:text-indigo-300 font-medium flex items-center gap-1">
               <Sparkles className="w-3.5 h-3.5 text-amber-500 shrink-0" />
-              <span>Gemini AI will generate custom vocabulary, tracing lines, and coloring activities for this topic.</span>
+              <span>Gemini AI will craft a complete custom workbook tailored to this topic.</span>
             </p>
           </div>
         )}
+
       </div>
 
       {/* 2. Select Language */}

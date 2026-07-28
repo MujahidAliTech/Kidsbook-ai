@@ -118,6 +118,42 @@ export default function App() {
     }
   };
 
+  const handleDuplicateBook = (bookToDuplicate: Book) => {
+    const duplicatedBook: Book = {
+      ...bookToDuplicate,
+      id: `book-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+      title: `${bookToDuplicate.title} (Copy)`,
+      createdAt: new Date().toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric'
+      })
+    };
+    saveBook(duplicatedBook);
+    setSavedBooks(getSavedBooks());
+  };
+
+  const handleRenameBook = (id: string, newTitle: string) => {
+    const allBooks = getSavedBooks();
+    const updatedAll = allBooks.map((b) => (b.id === id ? { ...b, title: newTitle } : b));
+    localStorage.setItem('kidsbook_saved_books_v1', JSON.stringify(updatedAll));
+    setSavedBooks(updatedAll);
+    if (activeBook && activeBook.id === id) {
+      setActiveBook({ ...activeBook, title: newTitle });
+    }
+  };
+
+  const handleToggleFavorite = (id: string) => {
+    const allBooks = getSavedBooks();
+    const updatedAll = allBooks.map((b) => (b.id === id ? { ...b, isFavorite: !b.isFavorite } : b));
+    localStorage.setItem('kidsbook_saved_books_v1', JSON.stringify(updatedAll));
+    setSavedBooks(updatedAll);
+    if (activeBook && activeBook.id === id) {
+      setActiveBook({ ...activeBook, isFavorite: !activeBook.isFavorite });
+    }
+  };
+
+
   const handlePrint = (bookToPrint?: Book) => {
     if (bookToPrint) {
       setActiveBook(bookToPrint);
@@ -270,8 +306,12 @@ export default function App() {
               onDeleteBook={handleDeleteBook}
               onCreateNew={() => setActiveTab('create')}
               onPrintBook={(b) => handlePrint(b)}
+              onDuplicateBook={handleDuplicateBook}
+              onRenameBook={handleRenameBook}
+              onToggleFavorite={handleToggleFavorite}
             />
           )}
+
         </main>
 
         {/* Mobile Floating Action Bar for Instant Printing */}
