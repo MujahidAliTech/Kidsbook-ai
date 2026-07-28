@@ -15,9 +15,11 @@ import { HowItWorksSection } from './components/HowItWorksSection';
 import { SampleBooksSection } from './components/SampleBooksSection';
 import { FAQSection } from './components/FAQSection';
 import { Footer } from './components/Footer';
+import { AiOutlineGenerator } from './components/AiOutlineGenerator';
+import { BookPage } from './types';
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState<'create' | 'templates' | 'my-books' | 'preview'>('create');
+  const [activeTab, setActiveTab] = useState<'create' | 'templates' | 'my-books' | 'preview' | 'ai-outline'>('create');
   const [activeBook, setActiveBook] = useState<Book | null>(null);
   const [savedBooks, setSavedBooks] = useState<Book[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -117,6 +119,18 @@ export default function App() {
     setShowPrintModal(true);
   };
 
+  const handleAddPageToActiveBook = (newPage: BookPage) => {
+    if (!activeBook) return;
+    const updatedPages = [...activeBook.pages, newPage];
+    const updatedBook: Book = {
+      ...activeBook,
+      pages: updatedPages,
+    };
+    setActiveBook(updatedBook);
+    saveBook(updatedBook);
+    setSavedBooks(getSavedBooks());
+  };
+
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 font-sans selection:bg-indigo-100 dark:selection:bg-indigo-900 flex flex-col justify-between transition-colors">
       {/* Printable A4 Layout for window.print() */}
@@ -157,6 +171,12 @@ export default function App() {
 
               <BookForm onGenerate={handleGenerate} isGenerating={isGenerating} />
 
+              {/* AI Coloring Outline Generator Tool */}
+              <AiOutlineGenerator
+                activeBook={activeBook}
+                onAddPageToBook={handleAddPageToActiveBook}
+              />
+
               <SampleBooksSection onSelectSample={handleSelectTemplate} />
 
               <HowItWorksSection
@@ -189,6 +209,27 @@ export default function App() {
 
           {activeTab === 'templates' && (
             <TemplatesView onSelectTemplate={handleSelectTemplate} />
+          )}
+
+          {activeTab === 'ai-outline' && (
+            <div className="space-y-6">
+              <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 border border-slate-200 dark:border-slate-800 shadow-xs text-center max-w-3xl mx-auto">
+                <span className="px-3 py-1 bg-purple-100 dark:bg-purple-950 text-purple-700 dark:text-purple-300 font-extrabold text-xs rounded-full uppercase tracking-wider">
+                  ✨ Instant Printable Coloring Page
+                </span>
+                <h2 className="text-3xl font-black text-slate-900 dark:text-white mt-2">
+                  AI Line-Art & Coloring Sheet Generator
+                </h2>
+                <p className="text-slate-600 dark:text-slate-300 text-sm mt-1">
+                  Type any child prompt (e.g. &quot;Create a coloring page of a cute rabbit.&quot;) and AI will generate a crisp black &amp; white printable outline illustration.
+                </p>
+              </div>
+
+              <AiOutlineGenerator
+                activeBook={activeBook}
+                onAddPageToBook={handleAddPageToActiveBook}
+              />
+            </div>
           )}
 
           {activeTab === 'my-books' && (

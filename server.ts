@@ -62,7 +62,7 @@ Make sure the content is age-appropriate, positive, safe, highly engaging for ch
 Respond ONLY with the JSON array.`;
 
       const response = await ai.models.generateContent({
-        model: "gemini-2.5-flash",
+        model: "gemini-3.6-flash",
         contents: prompt,
         config: {
           responseMimeType: "application/json",
@@ -86,6 +86,112 @@ Respond ONLY with the JSON array.`;
       return res.status(500).json({
         error: "GENERATION_FAILED",
         message: err.message || "An unexpected error occurred.",
+      });
+    }
+  });
+
+  // API Route for AI Printable Outline Coloring Page Image Generation
+  app.post("/api/generate-coloring-image", async (req, res) => {
+    try {
+      const { prompt: userPrompt } = req.body;
+
+      if (!userPrompt || typeof userPrompt !== "string") {
+        return res.status(400).json({ error: "Prompt is required." });
+      }
+
+      const apiKey = process.env.GEMINI_API_KEY;
+      if (!apiKey || apiKey === "MY_GEMINI_API_KEY") {
+        return res.status(530).json({
+          error: "API_KEY_NOT_CONFIGURED",
+          message: "AI Image Generation requires an active Gemini API key. Please configure your GEMINI_API_KEY.",
+        });
+      }
+
+      const ai = new GoogleGenAI({
+        apiKey: apiKey,
+        httpOptions: {
+          headers: {
+            "User-Agent": "aistudio-build",
+          },
+        },
+      });
+
+      const fullPrompt = `A clean, black and white printable outline vector coloring book illustration for kids of: ${userPrompt}. 
+Features:
+- Pure black outlines on plain white background.
+- Bold, smooth, clean vector lines suitable for children to color with crayons or markers.
+- No color, no gray shading, no gradients, no photorealism.
+- High contrast, cute, age-appropriate, clear subject in center.`;
+
+      let imageUrl: string | null = null;
+
+      try {
+        const response = await ai.models.generateContent({
+          model: "gemini-3.1-flash-lite-image",
+          contents: {
+            parts: [
+              {
+                text: fullPrompt,
+              },
+            ],
+          },
+          config: {
+            imageConfig: {
+              aspectRatio: "1:1",
+            },
+          },
+        });
+
+        if (response.candidates?.[0]?.content?.parts) {
+          for (const part of response.candidates[0].content.parts) {
+            if (part.inlineData?.data) {
+              const mime = part.inlineData.mimeType || "image/png";
+              imageUrl = `data:${mime};base64,${part.inlineData.data}`;
+              break;
+            }
+          }
+        }
+      } catch (imgError: any) {
+        console.warn("Primary image model gemini-3.1-flash-lite-image failed, trying fallback...", imgError.message);
+        
+        // Fallback attempt with imagen-3.0-generate-002 or gemini-3.1-flash-image
+        try {
+          const fallbackResp = await ai.models.generateContent({
+            model: "gemini-3.1-flash-image",
+            contents: { parts: [{ text: fullPrompt }] },
+            config: { imageConfig: { aspectRatio: "1:1" } }
+          });
+          if (fallbackResp.candidates?.[0]?.content?.parts) {
+            for (const part of fallbackResp.candidates[0].content.parts) {
+              if (part.inlineData?.data) {
+                const mime = part.inlineData.mimeType || "image/png";
+                imageUrl = `data:${mime};base64,${part.inlineData.data}`;
+                break;
+              }
+            }
+          }
+        } catch (e: any) {
+          console.error("All image generation models failed:", e.message);
+        }
+      }
+
+      if (imageUrl) {
+        return res.json({
+          success: true,
+          imageUrl: imageUrl,
+          prompt: userPrompt,
+        });
+      } else {
+        return res.status(500).json({
+          error: "IMAGE_GEN_FAILED",
+          message: "Could not generate coloring image outline. Please try again or refine your prompt.",
+        });
+      }
+    } catch (err: any) {
+      console.error("Error in generate-coloring-image endpoint:", err);
+      return res.status(500).json({
+        error: "GENERATION_ERROR",
+        message: err.message || "Failed to process image generation request.",
       });
     }
   });

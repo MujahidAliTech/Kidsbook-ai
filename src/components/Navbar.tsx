@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import { BookOpen, Sparkles, Printer, Bookmark, Menu, X, PlusCircle, Sun, Moon } from 'lucide-react';
+import { BookOpen, Sparkles, Printer, Bookmark, Menu, X, PlusCircle, Sun, Moon, Palette } from 'lucide-react';
 
 interface Props {
-  activeTab: 'create' | 'templates' | 'my-books' | 'preview';
-  setActiveTab: (tab: 'create' | 'templates' | 'my-books' | 'preview') => void;
+  activeTab: 'create' | 'templates' | 'my-books' | 'preview' | 'ai-outline';
+  setActiveTab: (tab: 'create' | 'templates' | 'my-books' | 'preview' | 'ai-outline') => void;
   savedCount: number;
   hasActiveBook: boolean;
   onPrintActiveBook?: () => void;
@@ -70,6 +70,21 @@ export const Navbar: React.FC<Props> = ({
           >
             <Sparkles className="w-4 h-4" />
             <span>Templates</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('ai-outline')}
+            className={`px-4 py-2 rounded-xl text-sm font-bold transition-all flex items-center gap-2 relative ${
+              activeTab === 'ai-outline'
+                ? 'bg-purple-600 text-white shadow-xs'
+                : 'text-purple-700 dark:text-purple-300 bg-purple-50 dark:bg-purple-950/60 hover:bg-purple-100 dark:hover:bg-purple-900 border border-purple-200 dark:border-purple-800'
+            }`}
+          >
+            <Palette className="w-4 h-4" />
+            <span>AI Outline</span>
+            <span className="px-1.5 py-0.2 bg-amber-400 text-amber-950 font-black text-[10px] rounded-full uppercase">
+              NEW
+            </span>
           </button>
 
           <button
@@ -181,6 +196,17 @@ export const Navbar: React.FC<Props> = ({
           >
             <Sparkles className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
             <span>Pre-Made Templates</span>
+          </button>
+
+          <button
+            onClick={() => {
+              setActiveTab('ai-outline');
+              setMobileMenuOpen(false);
+            }}
+            className="w-full text-left px-4 py-3 rounded-xl font-bold text-purple-700 dark:text-purple-300 bg-purple-50 dark:bg-purple-950/60 border border-purple-200 dark:border-purple-800 flex items-center gap-3"
+          >
+            <Palette className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+            <span>AI Outline Generator (New)</span>
           </button>
 
           <button

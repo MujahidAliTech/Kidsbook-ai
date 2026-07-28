@@ -39,8 +39,22 @@ export const ColoringPageRenderer: React.FC<Props> = ({ page }) => {
 
       {/* Main Coloring Graphic */}
       <div className="my-auto flex flex-col items-center justify-center text-center py-4">
-        <div className="p-6 bg-slate-50/50 rounded-3xl border-2 border-dashed border-slate-300 flex items-center justify-center min-h-[220px]">
-          <VectorOutline shapeKey={page.svgShape} word={page.word} emoji={page.imageEmoji} />
+        <div className="p-4 bg-slate-50/50 rounded-3xl border-2 border-dashed border-slate-300 flex items-center justify-center min-h-[220px]">
+          {page.imageUrl ? (
+            <div className="relative group">
+              <img
+                src={page.imageUrl}
+                alt={page.word || 'Coloring outline'}
+                referrerPolicy="no-referrer"
+                className="max-h-72 max-w-full object-contain filter contrast-150 border-2 border-slate-900 rounded-2xl bg-white p-2 shadow-sm"
+              />
+              <span className="absolute bottom-2 right-2 px-2 py-0.5 bg-purple-600 text-white text-[10px] font-bold rounded-full shadow-xs">
+                AI Outline
+              </span>
+            </div>
+          ) : (
+            <VectorOutline shapeKey={page.svgShape} word={page.word} emoji={page.imageEmoji} />
+          )}
         </div>
 
         <div className="mt-4">

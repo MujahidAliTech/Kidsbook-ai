@@ -34,6 +34,7 @@ export interface BookPage {
   urduWord?: string;
   urduTransliteration?: string;
   imageEmoji?: string;
+  imageUrl?: string; // High-resolution AI outline illustration URL or base64
   svgShape?: string; // Key for outline vector drawing for coloring
   description?: string;
   tracingText?: string;
