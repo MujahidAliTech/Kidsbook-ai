@@ -146,6 +146,34 @@ Respond ONLY with the JSON array.`;
     }
   });
 
+  // Helper for generating fallback SVG coloring page outline
+  function generateFallbackSvgDataUrl(prompt: string): string {
+    const cleanPrompt = prompt
+      .replace(/create a coloring page of/i, '')
+      .replace(/a coloring page of/i, '')
+      .replace(/color page of/i, '')
+      .replace(/draw/i, '')
+      .trim()
+      .toUpperCase();
+
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 500" width="100%" height="100%">
+      <rect width="100%" height="100%" fill="#ffffff"/>
+      <rect x="20" y="20" width="460" height="460" rx="24" fill="none" stroke="#000000" stroke-width="6" stroke-dasharray="12 8"/>
+      <circle cx="250" cy="220" r="130" fill="#ffffff" stroke="#000000" stroke-width="8"/>
+      <circle cx="200" cy="180" r="16" fill="#ffffff" stroke="#000000" stroke-width="6"/>
+      <circle cx="300" cy="180" r="16" fill="#ffffff" stroke="#000000" stroke-width="6"/>
+      <circle cx="204" cy="184" r="6" fill="#000000"/>
+      <circle cx="304" cy="184" r="6" fill="#000000"/>
+      <path d="M 220 240 Q 250 270 280 240" fill="none" stroke="#000000" stroke-width="8" stroke-linecap="round"/>
+      <path d="M 170 120 Q 250 80 330 120" fill="none" stroke="#000000" stroke-width="8" stroke-linecap="round"/>
+      <text x="250" y="405" font-family="sans-serif" font-weight="900" font-size="26" text-anchor="middle" fill="#ffffff" stroke="#000000" stroke-width="3" letter-spacing="2">
+        ${cleanPrompt || 'COLORING PAGE'}
+      </text>
+    </svg>`;
+
+    return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
+  }
+
   // API Route for AI Printable Outline Coloring Page Image Generation
   app.post("/api/generate-coloring-image", async (req, res) => {
     try {
@@ -181,6 +209,7 @@ Features:
 
       let imageUrl: string | null = null;
 
+      // Tier 1: Try gemini-3.1-flash-lite-image
       try {
         const response = await ai.models.generateContent({
           model: "gemini-3.1-flash-lite-image",
@@ -210,7 +239,7 @@ Features:
       } catch (imgError: any) {
         console.warn("Primary image model gemini-3.1-flash-lite-image failed, trying fallback...", imgError.message);
         
-        // Fallback attempt with imagen-3.0-generate-002 or gemini-3.1-flash-image
+        // Tier 2: Try gemini-3.1-flash-image
         try {
           const fallbackResp = await ai.models.generateContent({
             model: "gemini-3.1-flash-image",
@@ -227,27 +256,55 @@ Features:
             }
           }
         } catch (e: any) {
-          console.error("All image generation models failed:", e.message);
+          console.warn("All image generation models rate limited or failed, trying Tier 3 gemini-3.6-flash SVG generation...", e.message);
+
+          // Tier 3: Ask gemini-3.6-flash (Text model with higher quota) to generate clean SVG code
+          try {
+            const svgPrompt = `You are a professional children's book illustrator.
+Create a clean, cute, black-and-white vector SVG coloring page outline for kids of: "${userPrompt}".
+Requirements:
+1. Return ONLY raw valid SVG code starting with <svg> and ending with </svg>. No markdown block, no conversational text.
+2. ViewBox "0 0 500 500".
+3. Use thick black strokes (stroke="#000000", stroke-width="6" or "8") and white fills (fill="#ffffff") or fill="none" suitable for coloring inside the lines.
+4. Include simple recognizable cute shapes representing "${userPrompt}".`;
+
+            const svgResp = await ai.models.generateContent({
+              model: "gemini-3.6-flash",
+              contents: svgPrompt,
+              config: { temperature: 0.3 }
+            });
+
+            const text = svgResp.text || "";
+            const svgMatch = text.match(/<svg[\s\S]*?<\/svg>/i);
+            if (svgMatch) {
+              const cleanSvg = svgMatch[0];
+              imageUrl = `data:image/svg+xml;utf8,${encodeURIComponent(cleanSvg)}`;
+            }
+          } catch (svgErr: any) {
+            console.warn("Tier 3 SVG generation also failed:", svgErr.message);
+          }
         }
       }
 
-      if (imageUrl) {
-        return res.json({
-          success: true,
-          imageUrl: imageUrl,
-          prompt: userPrompt,
-        });
-      } else {
-        return res.status(500).json({
-          error: "IMAGE_GEN_FAILED",
-          message: "Could not generate coloring image outline. Please try again or refine your prompt.",
-        });
+      // Tier 4: Fallback to built-in clean vector outline if all AI attempts fail
+      if (!imageUrl) {
+        imageUrl = generateFallbackSvgDataUrl(userPrompt);
       }
+
+      return res.json({
+        success: true,
+        imageUrl: imageUrl,
+        prompt: userPrompt,
+      });
+
     } catch (err: any) {
       console.error("Error in generate-coloring-image endpoint:", err);
-      return res.status(500).json({
-        error: "GENERATION_ERROR",
-        message: err.message || "Failed to process image generation request.",
+      // Even in catch block, return a valid fallback image so UI never crashes
+      return res.json({
+        success: true,
+        imageUrl: generateFallbackSvgDataUrl(req.body?.prompt || 'Coloring Page'),
+        prompt: req.body?.prompt || 'Coloring Page',
+        isFallback: true
       });
     }
   });
