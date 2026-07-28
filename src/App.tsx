@@ -10,6 +10,11 @@ import { TemplatesView } from './components/TemplatesView';
 import { MyBooksView } from './components/MyBooksView';
 import { PrintLayout } from './components/PrintLayout';
 import { PrintModal } from './components/PrintModal';
+import { FeaturesSection } from './components/FeaturesSection';
+import { HowItWorksSection } from './components/HowItWorksSection';
+import { SampleBooksSection } from './components/SampleBooksSection';
+import { FAQSection } from './components/FAQSection';
+import { Footer } from './components/Footer';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<'create' | 'templates' | 'my-books' | 'preview'>('create');
@@ -17,8 +22,26 @@ export default function App() {
   const [savedBooks, setSavedBooks] = useState<Book[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
   const [showPrintModal, setShowPrintModal] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState<boolean>(() => {
+    return localStorage.getItem('kidsbook_theme') === 'dark';
+  });
 
-  // Initialize saved books and initial default experience
+  // Sync dark mode class on HTML document element
+  useEffect(() => {
+    if (isDarkMode) {
+      document.documentElement.classList.add('dark');
+      localStorage.setItem('kidsbook_theme', 'dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+      localStorage.setItem('kidsbook_theme', 'light');
+    }
+  }, [isDarkMode]);
+
+  const toggleDarkMode = () => {
+    setIsDarkMode((prev) => !prev);
+  };
+
+  // Initialize saved books and default initial book
   useEffect(() => {
     const loaded = getSavedBooks();
     setSavedBooks(loaded);
@@ -49,6 +72,7 @@ export default function App() {
       saveBook(newBook);
       setSavedBooks(getSavedBooks());
       setActiveTab('preview');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     } catch (e) {
       console.error('Failed to generate book', e);
       alert('An error occurred while generating the book. Please try again.');
@@ -65,6 +89,7 @@ export default function App() {
       saveBook(tplBook);
       setSavedBooks(getSavedBooks());
       setActiveTab('preview');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     } catch (e) {
       console.error('Failed to load template', e);
     } finally {
@@ -93,7 +118,7 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-800 font-sans selection:bg-indigo-100 flex flex-col justify-between">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 font-sans selection:bg-indigo-100 dark:selection:bg-indigo-900 flex flex-col justify-between transition-colors">
       {/* Printable A4 Layout for window.print() */}
       {activeBook && <PrintLayout book={activeBook} />}
 
@@ -113,13 +138,39 @@ export default function App() {
           savedCount={savedBooks.length}
           hasActiveBook={!!activeBook}
           onPrintActiveBook={activeBook ? () => handlePrint() : undefined}
+          isDarkMode={isDarkMode}
+          toggleDarkMode={toggleDarkMode}
         />
 
         <main className="max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1">
           {activeTab === 'create' && (
-            <div>
-              <HeroBanner />
+            <div className="space-y-12">
+              <HeroBanner
+                onCreateClick={() => {
+                  const formElem = document.getElementById('generator-form');
+                  if (formElem) {
+                    formElem.scrollIntoView({ behavior: 'smooth' });
+                  }
+                }}
+                onExploreTemplates={() => setActiveTab('templates')}
+              />
+
               <BookForm onGenerate={handleGenerate} isGenerating={isGenerating} />
+
+              <SampleBooksSection onSelectSample={handleSelectTemplate} />
+
+              <HowItWorksSection
+                onCreateClick={() => {
+                  const formElem = document.getElementById('generator-form');
+                  if (formElem) {
+                    formElem.scrollIntoView({ behavior: 'smooth' });
+                  }
+                }}
+              />
+
+              <FeaturesSection />
+
+              <FAQSection />
             </div>
           )}
 
@@ -154,19 +205,20 @@ export default function App() {
           )}
         </main>
 
-        {/* Footer */}
-        <footer className="no-print bg-white border-t border-slate-200 py-6 text-center text-xs text-slate-500">
-          <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-3">
-            <div className="flex items-center gap-2 font-bold text-slate-700">
-              <span>KidsBook AI</span>
-              <span>•</span>
-              <span className="font-medium text-slate-500">Create. Learn. Print.</span>
-            </div>
-            <p className="text-[11px] text-slate-400">
-              AI-powered printable learning books & educational worksheets for kids (Ages 2–7).
-            </p>
-          </div>
-        </footer>
+        {/* Professional Footer */}
+        <Footer
+          onSelectCategory={(cat) => {
+            setActiveTab('create');
+            setTimeout(() => {
+              const formElem = document.getElementById('generator-form');
+              if (formElem) {
+                formElem.scrollIntoView({ behavior: 'smooth' });
+              }
+            }, 100);
+          }}
+          isDarkMode={isDarkMode}
+          toggleDarkMode={toggleDarkMode}
+        />
       </div>
     </div>
   );
