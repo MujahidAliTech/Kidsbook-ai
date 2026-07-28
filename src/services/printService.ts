@@ -29,7 +29,22 @@ export function downloadPrintableHtml(book: Book) {
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>${escapeHtml(book.title)} - Printable Book</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Noto+Nastaliq+Urdu:wght@400;600;700&family=Quicksand:wght@500;700&display=swap" rel="stylesheet" />
   <style>
+    .font-urdu {
+      font-family: 'Noto Nastaliq Urdu', 'Jameel Noori Nastaleeq', 'Urdu Typesetting', Tahoma, sans-serif;
+    }
+    .font-kids {
+      font-family: 'Fredoka', 'Quicksand', system-ui, sans-serif;
+    }
+    .font-outline-dotted {
+      letter-spacing: 0.25em;
+      -webkit-text-stroke: 1.8px #64748b;
+      color: transparent;
+      font-family: 'Fredoka', ui-monospace, monospace;
+    }
     @media print {
       @page {
         size: A4 portrait;
@@ -39,6 +54,8 @@ export function downloadPrintableHtml(book: Book) {
         background: white !important;
         margin: 0 !important;
         padding: 0 !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
       }
       .print-page {
         width: 210mm !important;
@@ -46,10 +63,13 @@ export function downloadPrintableHtml(book: Book) {
         page-break-after: always !important;
         break-after: page !important;
         box-sizing: border-box !important;
-        padding: 10mm !important;
+        padding: 12mm 10mm !important;
         overflow: hidden !important;
         margin: 0 !important;
         box-shadow: none !important;
+        background: white !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
       }
       .no-print {
         display: none !important;
@@ -59,7 +79,7 @@ export function downloadPrintableHtml(book: Book) {
       width: 210mm;
       min-height: 297mm;
       margin: 20px auto;
-      padding: 10mm;
+      padding: 12mm 10mm;
       box-shadow: 0 4px 20px rgba(0,0,0,0.12);
       background: white;
       box-sizing: border-box;

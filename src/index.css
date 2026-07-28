@@ -2,11 +2,17 @@
 
 @layer utilities {
   .font-urdu {
-    font-family: 'Jameel Noori Nastaleeq', 'Urdu Typesetting', 'Noto Nastaliq Urdu', 'Noto Sans Arabic', Tahoma, sans-serif;
+    font-family: 'Noto Nastaliq Urdu', 'Jameel Noori Nastaleeq', 'Urdu Typesetting', 'Noto Sans Arabic', Tahoma, sans-serif;
+  }
+  .font-kids {
+    font-family: 'Fredoka', 'Quicksand', system-ui, sans-serif;
+  }
+  .font-handwriting {
+    font-family: 'Quicksand', 'Fredoka', sans-serif;
   }
 }
 
-/* Print Only & No Print Rules */
+/* Print Only & No Print Rules for A4 High Quality Output */
 .print-only {
   display: none !important;
 }
@@ -25,6 +31,8 @@
     width: 100% !important;
     height: auto !important;
     min-height: 0 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
   }
 
   .no-print {
@@ -53,7 +61,7 @@
     border-radius: 0 !important;
     border: none !important;
     margin: 0 !important;
-    padding: 10mm !important;
+    padding: 12mm 10mm !important;
     box-sizing: border-box !important;
     overflow: hidden !important;
     background: white !important;
@@ -62,10 +70,19 @@
   }
 }
 
-/* Custom Dotted Tracing Outline Styling */
+/* Custom Dotted Tracing Outline Styling for High-Resolution Printing */
 .font-outline-dotted {
-  letter-spacing: 0.2em;
-  -webkit-text-stroke: 1.5px #94a3b8;
+  letter-spacing: 0.25em;
+  -webkit-text-stroke: 1.8px #64748b;
   color: transparent;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-family: 'Fredoka', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
+/* 4-Line Handwriting Guide Container */
+.handwriting-grid-4line {
+  position: relative;
+  width: 100%;
+  background: #f8fafc;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
 }

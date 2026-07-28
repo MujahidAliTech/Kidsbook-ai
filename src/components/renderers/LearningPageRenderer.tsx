@@ -72,7 +72,7 @@ export const LearningPageRenderer: React.FC<Props> = ({ page, ageGroup }) => {
           <span>Trace on lines</span>
         </div>
 
-        <TracingLines text={tracingText} rows={6} ageGroup={ageGroup} />
+        <TracingLines text={tracingText} rows={6} ageGroup={ageGroup} isUrdu={isUrdu} />
       </div>
     </div>
   );

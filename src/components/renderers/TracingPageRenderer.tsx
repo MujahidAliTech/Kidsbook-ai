@@ -59,13 +59,13 @@ export const TracingPageRenderer: React.FC<Props> = ({ page, ageGroup }) => {
           <span>Row 1–3: Trace Letter / Character ({page.mainCharacter})</span>
           <span>Light Dotted Lines</span>
         </div>
-        <TracingLines text={page.mainCharacter} rows={3} ageGroup={ageGroup} />
+        <TracingLines text={page.mainCharacter} rows={3} ageGroup={ageGroup} isUrdu={isUrdu} />
 
         <div className="text-xs font-bold text-slate-600 uppercase tracking-wider flex justify-between pt-1">
           <span>Row 4–6: Trace Word ({page.word})</span>
           <span>Writing Guide</span>
         </div>
-        <TracingLines text={`${page.word}  ${page.word}`} rows={3} ageGroup={ageGroup} />
+        <TracingLines text={`${page.word}  ${page.word}`} rows={3} ageGroup={ageGroup} isUrdu={isUrdu} />
       </div>
 
       {/* Footer Encouragement */}
