@@ -10,6 +10,8 @@ import { TemplatesView } from './components/TemplatesView';
 import { MyBooksView } from './components/MyBooksView';
 import { PrintLayout } from './components/PrintLayout';
 import { PrintModal } from './components/PrintModal';
+import { LoadingModal } from './components/LoadingModal';
+import { SuccessDialog } from './components/SuccessDialog';
 import { FeaturesSection } from './components/FeaturesSection';
 import { HowItWorksSection } from './components/HowItWorksSection';
 import { SampleBooksSection } from './components/SampleBooksSection';
@@ -17,6 +19,7 @@ import { FAQSection } from './components/FAQSection';
 import { Footer } from './components/Footer';
 import { AiOutlineGenerator } from './components/AiOutlineGenerator';
 import { BookPage } from './types';
+import { Printer, Eye, BookOpen } from 'lucide-react';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<'create' | 'templates' | 'my-books' | 'preview' | 'ai-outline'>('create');
@@ -24,6 +27,9 @@ export default function App() {
   const [savedBooks, setSavedBooks] = useState<Book[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
   const [showPrintModal, setShowPrintModal] = useState(false);
+  const [showSuccessDialog, setShowSuccessDialog] = useState(false);
+  const [generatedBookForModal, setGeneratedBookForModal] = useState<Book | null>(null);
+
   const [isDarkMode, setIsDarkMode] = useState<boolean>(() => {
     return localStorage.getItem('kidsbook_theme') === 'dark';
   });
@@ -73,8 +79,8 @@ export default function App() {
       setActiveBook(newBook);
       saveBook(newBook);
       setSavedBooks(getSavedBooks());
-      setActiveTab('preview');
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      setGeneratedBookForModal(newBook);
+      setShowSuccessDialog(true);
     } catch (e) {
       console.error('Failed to generate book', e);
       alert('An error occurred while generating the book. Please try again.');
@@ -90,8 +96,8 @@ export default function App() {
       setActiveBook(tplBook);
       saveBook(tplBook);
       setSavedBooks(getSavedBooks());
-      setActiveTab('preview');
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      setGeneratedBookForModal(tplBook);
+      setShowSuccessDialog(true);
     } catch (e) {
       console.error('Failed to load template', e);
     } finally {
@@ -144,6 +150,28 @@ export default function App() {
         />
       )}
 
+      {/* Animated Generation Loading Modal */}
+      <LoadingModal
+        isOpen={isGenerating}
+        categoryName={activeBook?.category}
+      />
+
+      {/* Success Notification Dialog */}
+      <SuccessDialog
+        isOpen={showSuccessDialog}
+        book={generatedBookForModal}
+        onClose={() => setShowSuccessDialog(false)}
+        onPreview={() => {
+          setActiveTab('preview');
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }}
+        onPrint={() => {
+          if (generatedBookForModal) {
+            handlePrint(generatedBookForModal);
+          }
+        }}
+      />
+
       {/* Main Web UI (Hidden during window.print via .no-print) */}
       <div className="no-print flex-1 flex flex-col">
         <Navbar
@@ -156,7 +184,7 @@ export default function App() {
           toggleDarkMode={toggleDarkMode}
         />
 
-        <main className="max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1">
+        <main className="max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1 pb-24 md:pb-8">
           {activeTab === 'create' && (
             <div className="space-y-12">
               <HeroBanner
@@ -218,7 +246,7 @@ export default function App() {
                   ✨ Instant Printable Coloring Page
                 </span>
                 <h2 className="text-3xl font-black text-slate-900 dark:text-white mt-2">
-                  AI Line-Art & Coloring Sheet Generator
+                  AI Line-Art &amp; Coloring Sheet Generator
                 </h2>
                 <p className="text-slate-600 dark:text-slate-300 text-sm mt-1">
                   Type any child prompt (e.g. &quot;Create a coloring page of a cute rabbit.&quot;) and AI will generate a crisp black &amp; white printable outline illustration.
@@ -246,9 +274,33 @@ export default function App() {
           )}
         </main>
 
+        {/* Mobile Floating Action Bar for Instant Printing */}
+        {activeBook && (
+          <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-t border-slate-200 dark:border-slate-800 p-3 flex items-center justify-between gap-3 shadow-2xl">
+            <button
+              onClick={() => {
+                setActiveTab('preview');
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }}
+              className="flex-1 py-3 px-3 bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100 font-black text-xs rounded-xl flex items-center justify-center gap-2 border border-slate-200 dark:border-slate-700 cursor-pointer"
+            >
+              <Eye className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+              <span className="truncate">Preview Book</span>
+            </button>
+
+            <button
+              onClick={() => handlePrint()}
+              className="flex-1 py-3 px-3 bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 font-black text-xs rounded-xl flex items-center justify-center gap-2 shadow-lg cursor-pointer"
+            >
+              <Printer className="w-4 h-4 text-slate-950" />
+              <span className="truncate">Print / Save PDF</span>
+            </button>
+          </div>
+        )}
+
         {/* Professional Footer */}
         <Footer
-          onSelectCategory={(cat) => {
+          onSelectCategory={() => {
             setActiveTab('create');
             setTimeout(() => {
               const formElem = document.getElementById('generator-form');
