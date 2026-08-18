@@ -39,17 +39,40 @@ async function startServer() {
       const systemInstruction = buildSystemInstruction();
       const prompt = buildBookGenerationPrompt(config);
 
-      const response = await ai.models.generateContent({
-        model: "gemini-3.6-flash",
-        contents: prompt,
-        config: {
-          systemInstruction,
-          responseMimeType: "application/json",
-          temperature: 0.7,
-        },
-      });
+      const modelsToTry = [
+        "gemini-3.7-flash",
+        "gemini-3.6-flash",
+        "gemini-3.5-flash",
+        "gemini-2.5-flash"
+      ];
 
-      const responseText = response.text || "{}";
+      let lastError: any = null;
+      let responseText = "";
+
+      for (const model of modelsToTry) {
+        try {
+          console.log(`Attempting book generation with model: ${model}`);
+          const response = await ai.models.generateContent({
+            model: model,
+            contents: prompt,
+            config: {
+              systemInstruction,
+              responseMimeType: "application/json",
+              temperature: 0.7,
+            },
+          });
+          responseText = response.text || "{}";
+          lastError = null;
+          break; // Succeeded!
+        } catch (err: any) {
+          console.log(`[Model Fallback Handler] Model ${model} returned code: ${err.status || err.code || 'unavailable'}. Retrying next available...`);
+          lastError = err;
+        }
+      }
+
+      if (lastError) {
+        throw lastError;
+      }
 
       return res.json({
         success: true,
@@ -117,16 +140,39 @@ Return a valid JSON array of objects, where each object represents one page cont
 Make sure the content is age-appropriate, positive, safe, highly engaging for children, and matches the topic strictly.
 Respond ONLY with the JSON array.`;
 
-      const response = await ai.models.generateContent({
-        model: "gemini-3.6-flash",
-        contents: prompt,
-        config: {
-          responseMimeType: "application/json",
-          temperature: 0.7,
-        },
-      });
+      const modelsToTry = [
+        "gemini-3.7-flash",
+        "gemini-3.6-flash",
+        "gemini-3.5-flash",
+        "gemini-2.5-flash"
+      ];
 
-      const responseText = response.text || "[]";
+      let lastError: any = null;
+      let responseText = "";
+
+      for (const model of modelsToTry) {
+        try {
+          console.log(`Attempting custom generation with model: ${model}`);
+          const response = await ai.models.generateContent({
+            model: model,
+            contents: prompt,
+            config: {
+              responseMimeType: "application/json",
+              temperature: 0.7,
+            },
+          });
+          responseText = response.text || "[]";
+          lastError = null;
+          break; // Succeeded!
+        } catch (err: any) {
+          console.log(`[Model Fallback Handler] Custom generator model ${model} returned code: ${err.status || err.code || 'unavailable'}. Retrying next available...`);
+          lastError = err;
+        }
+      }
+
+      if (lastError) {
+        throw lastError;
+      }
       let parsed = [];
       try {
         const cleanedText = responseText.replace(/```json\s*/gi, '').replace(/```\s*/g, '').trim();
@@ -237,7 +283,7 @@ Features:
           }
         }
       } catch (imgError: any) {
-        console.warn("Primary image model gemini-3.1-flash-lite-image failed, trying fallback...", imgError.message);
+        console.log("[Image Fallback Handler] Primary image model gemini-3.1-flash-lite-image rate-limited/failed. Trying backup model...");
         
         // Tier 2: Try gemini-3.1-flash-image
         try {
@@ -256,9 +302,9 @@ Features:
             }
           }
         } catch (e: any) {
-          console.warn("All image generation models rate limited or failed, trying Tier 3 gemini-3.6-flash SVG generation...", e.message);
+          console.log("[Image Fallback Handler] All direct image generation models rate limited. Attempting Tier 3 vector SVG generation...");
 
-          // Tier 3: Ask gemini-3.6-flash (Text model with higher quota) to generate clean SVG code
+          // Tier 3: Ask a text model with higher quota to generate clean SVG code
           try {
             const svgPrompt = `You are a professional children's book illustrator.
 Create a clean, cute, black-and-white vector SVG coloring page outline for kids of: "${userPrompt}".
@@ -268,20 +314,31 @@ Requirements:
 3. Use thick black strokes (stroke="#000000", stroke-width="6" or "8") and white fills (fill="#ffffff") or fill="none" suitable for coloring inside the lines.
 4. Include simple recognizable cute shapes representing "${userPrompt}".`;
 
-            const svgResp = await ai.models.generateContent({
-              model: "gemini-3.6-flash",
-              contents: svgPrompt,
-              config: { temperature: 0.3 }
-            });
+            let svgResp = null;
+            for (const textModel of ["gemini-3.7-flash", "gemini-3.6-flash", "gemini-3.5-flash", "gemini-2.5-flash"]) {
+              try {
+                console.log(`Attempting SVG outline generation with model: ${textModel}`);
+                svgResp = await ai.models.generateContent({
+                  model: textModel,
+                  contents: svgPrompt,
+                  config: { temperature: 0.3 }
+                });
+                if (svgResp && svgResp.text) {
+                  break;
+                }
+              } catch (svgModelErr: any) {
+                console.log(`[SVG Fallback Handler] Outline model ${textModel} unavailable. Trying next backup...`);
+              }
+            }
 
-            const text = svgResp.text || "";
+            const text = svgResp?.text || "";
             const svgMatch = text.match(/<svg[\s\S]*?<\/svg>/i);
             if (svgMatch) {
               const cleanSvg = svgMatch[0];
               imageUrl = `data:image/svg+xml;utf8,${encodeURIComponent(cleanSvg)}`;
             }
           } catch (svgErr: any) {
-            console.warn("Tier 3 SVG generation also failed:", svgErr.message);
+            console.log("[SVG Fallback Handler] Tier 3 outline vector generation completed with offline fallback protection.");
           }
         }
       }

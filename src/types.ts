@@ -121,6 +121,8 @@ export interface BookConfig {
   childName?: string;
   difficulty?: Difficulty;
   learningGoal?: string;
+  startRange?: string;
+  endRange?: string;
 }
 
 export interface Book {

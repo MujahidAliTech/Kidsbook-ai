@@ -43,9 +43,12 @@ export function buildBookGenerationPrompt(config: BookConfig): string {
   const pageCount = config.pageCount || 6;
   const isUrdu = config.language === 'urdu' || config.category === 'urdu-alphabet';
   const isBilingual = config.language === 'bilingual';
+  const rangeInfo = config.startRange && config.endRange 
+    ? `- Printing/Content Range: From "${config.startRange}" to "${config.endRange}". Ensure each page sequentially covers characters or items in this range.`
+    : '';
 
   return `Generate a complete ${pageCount}-page educational book payload for children.
-
+${rangeInfo ? rangeInfo + '\n' : ''}
 BOOK SPECIFICATIONS:
 - Category: ${config.category}
 - Specific Topic: "${config.customTopic || config.category}"
