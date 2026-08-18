@@ -48,8 +48,8 @@ export const ColoringPageRenderer: React.FC<Props> = ({ page }) => {
                 referrerPolicy="no-referrer"
                 className="max-h-72 max-w-full object-contain filter contrast-150 border-2 border-slate-900 rounded-2xl bg-white p-2 shadow-sm"
               />
-              <span className="absolute bottom-2 right-2 px-2 py-0.5 bg-purple-600 text-white text-[10px] font-bold rounded-full shadow-xs">
-                AI Outline
+              <span className="absolute bottom-2 right-2 px-2 py-0.5 bg-indigo-600 text-white text-[10px] font-bold rounded-full shadow-xs">
+                {page.imageUrl.startsWith('data:image/svg+xml') ? 'AI Outline' : 'Custom Graphic'}
               </span>
             </div>
           ) : (

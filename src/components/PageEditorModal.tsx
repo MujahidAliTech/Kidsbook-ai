@@ -15,7 +15,8 @@ import {
   Edit3,
   GripVertical,
   RotateCcw,
-  Palette
+  Palette,
+  Link
 } from 'lucide-react';
 import { Book, BookPage, PageType } from '../types';
 
@@ -42,6 +43,32 @@ export const PageEditorModal: React.FC<Props> = ({
   const [aiPrompt, setAiPrompt] = useState('');
   const [isGeneratingAi, setIsGeneratingAi] = useState(false);
   const [aiError, setAiError] = useState<string | null>(null);
+
+  // Custom image URL state & handlers
+  const [customUrl, setCustomUrl] = useState('');
+
+  const convertDriveUrlToDirectLink = (url: string): string => {
+    const trimmed = url.trim();
+    let fileId = '';
+    const dMatch = trimmed.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
+    const idMatch = trimmed.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+    if (dMatch && dMatch[1]) {
+      fileId = dMatch[1];
+    } else if (idMatch && idMatch[1]) {
+      fileId = idMatch[1];
+    }
+    if (fileId) {
+      return `https://lh3.googleusercontent.com/d/${fileId}`;
+    }
+    return trimmed;
+  };
+
+  const handleApplyCustomUrl = () => {
+    if (!customUrl.trim()) return;
+    const directLink = convertDriveUrlToDirectLink(customUrl);
+    updateCurrentPage({ imageUrl: directLink });
+    setCustomUrl('');
+  };
 
   // Drag and drop indices
   const [draggedIdx, setDraggedIdx] = useState<number | null>(null);
@@ -503,6 +530,33 @@ export const PageEditorModal: React.FC<Props> = ({
                       <span>{item.label}</span>
                     </button>
                   ))}
+                </div>
+              </div>
+
+              {/* Option D: Paste Custom Image URL / Google Drive Link */}
+              <div className="p-5 bg-white dark:bg-slate-800/50 rounded-2xl border border-slate-200 dark:border-slate-700 space-y-3">
+                <h4 className="font-extrabold text-sm text-slate-900 dark:text-white flex items-center gap-2">
+                  <Link className="w-4 h-4 text-indigo-600" />
+                  <span>Option 4: Use Custom Web Image URL / Google Drive Share Link</span>
+                </h4>
+                <p className="text-xs text-slate-500 dark:text-slate-400">
+                  Paste any direct image URL (from Imgur, Pinterest, etc.) or a Google Drive sharing link. We will automatically convert Drive links to work instantly!
+                </p>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={customUrl}
+                    onChange={(e) => setCustomUrl(e.target.value)}
+                    placeholder="https://drive.google.com/file/d/... or any direct image link..."
+                    className="flex-1 px-4 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-900 dark:text-white"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleApplyCustomUrl}
+                    className="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold text-xs rounded-xl transition-all cursor-pointer whitespace-nowrap"
+                  >
+                    Apply URL
+                  </button>
                 </div>
               </div>
             </div>
