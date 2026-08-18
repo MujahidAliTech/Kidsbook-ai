@@ -2,20 +2,53 @@ import React, { useState } from 'react';
 
 interface KidsImageProps {
   emoji: string;
+  word?: string; // Word used to search for real HD photography
   className?: string;
   style?: React.CSSProperties;
   size?: number; // Size in pixels
+  usePhoto?: boolean; // Force high-definition real life photograph from Unsplash
 }
 
 export const KidsImageIllustration: React.FC<KidsImageProps> = ({ 
   emoji, 
+  word,
   className = '', 
   style,
-  size = 130 
+  size = 130,
+  usePhoto = false
 }) => {
-  const [hasError, setHasError] = useState(false);
+  const [photoError, setPhotoError] = useState(false);
+  const [svgError, setSvgError] = useState(false);
 
-  if (!emoji) return null;
+  if (!emoji && !word) return null;
+
+  // 1. Layer 1: Try Real HD Photograph (if usePhoto is enabled and word is provided)
+  if (usePhoto && word && !photoError) {
+    const cleanWord = word.trim().split(' ')[0].split('/')[0].toLowerCase(); // Get first simple english word
+    // Curated high quality educational, isolated background search parameters
+    const unsplashUrl = `https://images.unsplash.com/featured/300x300/?${encodeURIComponent(cleanWord)},isolated,kids`;
+
+    return (
+      <img
+        src={unsplashUrl}
+        alt={word}
+        className={`${className} object-cover select-none rounded-2xl border-4 border-slate-100 shadow-md transition-transform duration-300 hover:scale-105`}
+        style={{ 
+          width: `${size}px`, 
+          height: `${size}px`,
+          maxWidth: '100%',
+          maxHeight: '100%',
+          aspectRatio: '1/1',
+          ...style 
+        }}
+        referrerPolicy="no-referrer"
+        onError={() => {
+          console.warn(`Unsplash photo load failed for [${cleanWord}]. Falling back to vector illustration.`);
+          setPhotoError(true);
+        }}
+      />
+    );
+  }
 
   // Convert emoji to uppercase hex string (e.g. "🍎" -> "1F34E")
   const getUnicodeHex = (str: string): string => {
@@ -31,14 +64,14 @@ export const KidsImageIllustration: React.FC<KidsImageProps> = ({
     }
   };
 
-  const hex = getUnicodeHex(emoji);
+  const hex = emoji ? getUnicodeHex(emoji) : '';
   
-  // Use jsDelivr CDN to load gorgeous, high-definition SVG artwork from OpenMoji
+  // 2. Layer 2: Load gorgeous, hand-drawn vector SVG artwork from OpenMoji
   const openMojiUrl = hex 
     ? `https://cdn.jsdelivr.net/gh/hfg-gmuend/openmoji/color/svg/${hex}.svg`
     : '';
 
-  if (openMojiUrl && !hasError) {
+  if (openMojiUrl && !svgError) {
     return (
       <img
         src={openMojiUrl}
@@ -53,12 +86,12 @@ export const KidsImageIllustration: React.FC<KidsImageProps> = ({
           ...style 
         }}
         referrerPolicy="no-referrer"
-        onError={() => setHasError(true)}
+        onError={() => setSvgError(true)}
       />
     );
   }
 
-  // Graceful fallback to gorgeous system emoji if CDN has any connectivity issues
+  // 3. Layer 3: Text emoji fallback
   return (
     <span 
       className={`select-none inline-block ${className}`} 
@@ -68,7 +101,7 @@ export const KidsImageIllustration: React.FC<KidsImageProps> = ({
         ...style 
       }}
     >
-      {emoji}
+      {emoji || '⭐'}
     </span>
   );
 };

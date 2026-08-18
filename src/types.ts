@@ -123,6 +123,7 @@ export interface BookConfig {
   learningGoal?: string;
   startRange?: string;
   endRange?: string;
+  imageStyle?: 'cartoon' | 'photo';
 }
 
 export interface Book {

@@ -28,6 +28,7 @@ export const BookForm: React.FC<Props> = ({ onGenerate, isGenerating }) => {
   // Inclusions & personalization
   const [includeCover, setIncludeCover] = useState(true);
   const [includeGuide, setIncludeGuide] = useState(false);
+  const [imageStyle, setImageStyle] = useState<'cartoon' | 'photo'>('cartoon');
   const [customTitle, setCustomTitle] = useState('');
   const [childName, setChildName] = useState('');
   const [difficulty, setDifficulty] = useState<'easy' | 'medium' | 'hard'>('medium');
@@ -100,6 +101,7 @@ export const BookForm: React.FC<Props> = ({ onGenerate, isGenerating }) => {
       learningGoal: learningGoal.trim() || undefined,
       startRange: startRange || undefined,
       endRange: endRange || undefined,
+      imageStyle,
     });
   };
 
@@ -494,6 +496,37 @@ export const BookForm: React.FC<Props> = ({ onGenerate, isGenerating }) => {
               <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">Includes curriculum objectives and progress trackers</span>
             </div>
           </label>
+
+          {/* New Image Style Selector */}
+          <div className="space-y-1.5 pt-1">
+            <span className="text-xs font-black text-slate-900 dark:text-slate-100 uppercase tracking-wider block">
+              📸 Image & Drawing Style
+            </span>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => setImageStyle('cartoon')}
+                className={`p-2.5 rounded-xl border text-center font-extrabold text-xs cursor-pointer transition-all ${
+                  imageStyle === 'cartoon'
+                    ? 'border-indigo-600 bg-indigo-50 text-indigo-950 dark:bg-indigo-950/60 dark:text-white'
+                    : 'border-slate-200 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:border-slate-300'
+                }`}
+              >
+                🎨 Cartoon Drawings
+              </button>
+              <button
+                type="button"
+                onClick={() => setImageStyle('photo')}
+                className={`p-2.5 rounded-xl border text-center font-extrabold text-xs cursor-pointer transition-all ${
+                  imageStyle === 'photo'
+                    ? 'border-indigo-600 bg-indigo-50 text-indigo-950 dark:bg-indigo-950/60 dark:text-white'
+                    : 'border-slate-200 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:border-slate-300'
+                }`}
+              >
+                📸 Real HD Photos
+              </button>
+            </div>
+          </div>
         </div>
 
         {/* Custom Text and Difficulty */}

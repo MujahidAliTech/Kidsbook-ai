@@ -42,7 +42,7 @@ export const PageContainer: React.FC<Props> = ({
       <div className="w-full h-full flex-1 flex flex-col">
         {page.type === 'cover' && <CoverPageRenderer book={book} />}
         {page.type === 'introduction' && <IntroductionPageRenderer page={page} />}
-        {(page.type === 'learning' || page.type === 'counting') && <LearningPageRenderer page={page} ageGroup={book.ageGroup} />}
+        {(page.type === 'learning' || page.type === 'counting') && <LearningPageRenderer page={page} ageGroup={book.ageGroup} imageStyle={book.config.imageStyle} />}
         {(page.type === 'tracing' || page.type === 'writing') && <TracingPageRenderer page={page} ageGroup={book.ageGroup} />}
         {page.type === 'coloring' && <ColoringPageRenderer page={page} />}
         {(page.type === 'activity' || page.type === 'puzzle' || page.type === 'review') && <ActivityPageRenderer page={page} />}

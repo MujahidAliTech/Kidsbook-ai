@@ -6,6 +6,7 @@ import { KidsImageIllustration } from './KidsImageIllustration';
 interface Props {
   page: BookPage;
   ageGroup: string;
+  imageStyle?: 'cartoon' | 'photo';
 }
 
 const formatCharacter = (char: string) => {
@@ -17,13 +18,16 @@ const formatCharacter = (char: string) => {
   return trimmed;
 };
 
-export const LearningPageRenderer: React.FC<Props> = ({ page, ageGroup }) => {
+export const LearningPageRenderer: React.FC<Props> = ({ page, ageGroup, imageStyle = 'cartoon' }) => {
   const isUrdu = page.isRtl;
   const isEarlyAge = ageGroup === '2-3' || ageGroup === '3-4';
   const tracingText = page.tracingText || page.mainCharacter || page.word || '';
 
   // Dynamic Theme Color based on page colorHex or default to cute red/rose
   const themeColor = page.colorHex || '#EF4444'; 
+
+  // Whether to show real life photos
+  const usePhoto = imageStyle === 'photo';
 
   // 1. GORGEOUS PICTURE BOOK STYLE FOR 2-3 & 3-4 YEARS (MATCHING THE USER'S PROVIDED IMAGE EXACTLY)
   if (isEarlyAge) {
@@ -56,7 +60,7 @@ export const LearningPageRenderer: React.FC<Props> = ({ page, ageGroup }) => {
           {/* Center: Giant Beautiful HD Cartoon Illustration */}
           <div className="flex-1 flex items-center justify-center my-4">
             <div className="transform hover:scale-110 transition-transform duration-300 select-none animate-bounce-slow">
-              <KidsImageIllustration emoji={page.imageEmoji || '⭐'} size={160} />
+              <KidsImageIllustration emoji={page.imageEmoji || '⭐'} word={page.word} usePhoto={usePhoto} size={160} />
             </div>
           </div>
 
@@ -116,7 +120,7 @@ export const LearningPageRenderer: React.FC<Props> = ({ page, ageGroup }) => {
 
         {/* Big Beautiful HD Cartoon Illustration */}
         <div className="w-32 h-32 md:w-36 md:h-36 rounded-full bg-slate-50 border border-slate-100 flex items-center justify-center shadow-xs transition-transform hover:scale-105 duration-200 p-4">
-          <KidsImageIllustration emoji={page.imageEmoji || '⭐'} size={96} />
+          <KidsImageIllustration emoji={page.imageEmoji || '⭐'} word={page.word} usePhoto={usePhoto} size={96} />
         </div>
 
         {/* Bold Word Display */}
