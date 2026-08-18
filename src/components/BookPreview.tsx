@@ -155,6 +155,24 @@ export const BookPreview: React.FC<Props> = ({
         {/* Action Buttons */}
         <div className="flex flex-wrap items-center gap-2.5 w-full md:w-auto">
           <button
+            type="button"
+            onClick={() => {
+              const currentStyle = book.config.imageStyle || 'cartoon';
+              const newStyle = currentStyle === 'cartoon' ? 'photo' : 'cartoon';
+              onUpdateBook({
+                ...book,
+                config: {
+                  ...book.config,
+                  imageStyle: newStyle
+                }
+              });
+            }}
+            className="px-4 py-2.5 bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-950/80 dark:hover:bg-indigo-900 border border-indigo-200 dark:border-indigo-800 text-indigo-900 dark:text-indigo-200 font-extrabold text-sm rounded-xl shadow-xs transition-all flex items-center gap-2 cursor-pointer"
+          >
+            {book.config.imageStyle === 'photo' ? '🎨 View Cartoon Style' : '📸 View Real HD Photos'}
+          </button>
+
+          <button
             onClick={() => setIsEditorOpen(true)}
             className="px-4 py-2.5 bg-purple-600 hover:bg-purple-500 text-white font-extrabold text-sm rounded-xl shadow-md transition-all flex items-center gap-2 cursor-pointer"
           >

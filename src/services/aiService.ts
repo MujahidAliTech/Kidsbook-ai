@@ -14,7 +14,7 @@ export interface BookGenerationResult {
 const bookCache = new Map<string, Book>();
 
 function getCacheKey(config: BookConfig): string {
-  return `${config.category}_${config.customTopic || ''}_${config.language}_${config.ageGroup}_${config.style}_${config.pageCount}_${config.childName || ''}`;
+  return `${config.category}_${config.customTopic || ''}_${config.language}_${config.ageGroup}_${config.style}_${config.pageCount}_${config.childName || ''}_${config.imageStyle || 'cartoon'}`;
 }
 
 export async function generateAiBook(
