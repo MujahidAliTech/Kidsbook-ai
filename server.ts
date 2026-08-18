@@ -4,6 +4,28 @@ import { createServer as createViteServer } from "vite";
 import { GoogleGenAI } from "@google/genai";
 import { buildSystemInstruction, buildBookGenerationPrompt } from "./src/services/prompts/bookPrompts";
 
+// Resilient API calling helper with Exponential Backoff + Jitter to absorb transient 503 errors
+async function generateContentWithRetry(ai: any, params: any, maxRetries = 3) {
+  let attempt = 0;
+  while (true) {
+    try {
+      return await ai.models.generateContent(params);
+    } catch (err: any) {
+      attempt++;
+      const errStatus = err.status || err.code || (err.error && err.error.code);
+      const isTransient = errStatus === 503 || String(err.message || '').includes("503") || String(err.message || '').includes("UNAVAILABLE") || String(err.message || '').includes("high demand");
+      
+      if (isTransient && attempt < maxRetries) {
+        const delay = Math.pow(2, attempt) * 600 + Math.random() * 300; // ~1.5s, ~2.7s
+        console.warn(`[Gemini API 503 Transient Warning] High demand on model ${params.model}. Retrying attempt ${attempt}/${maxRetries} after ${Math.round(delay)}ms...`);
+        await new Promise(resolve => setTimeout(resolve, delay));
+      } else {
+        throw err;
+      }
+    }
+  }
+}
+
 async function startServer() {
   const app = express();
   const PORT = 3000;
@@ -42,8 +64,7 @@ async function startServer() {
       const modelsToTry = [
         "gemini-3.7-flash",
         "gemini-3.6-flash",
-        "gemini-3.5-flash",
-        "gemini-2.5-flash"
+        "gemini-3.5-flash"
       ];
 
       let lastError: any = null;
@@ -52,7 +73,7 @@ async function startServer() {
       for (const model of modelsToTry) {
         try {
           console.log(`Attempting book generation with model: ${model}`);
-          const response = await ai.models.generateContent({
+          const response = await generateContentWithRetry(ai, {
             model: model,
             contents: prompt,
             config: {
@@ -143,8 +164,7 @@ Respond ONLY with the JSON array.`;
       const modelsToTry = [
         "gemini-3.7-flash",
         "gemini-3.6-flash",
-        "gemini-3.5-flash",
-        "gemini-2.5-flash"
+        "gemini-3.5-flash"
       ];
 
       let lastError: any = null;
@@ -153,7 +173,7 @@ Respond ONLY with the JSON array.`;
       for (const model of modelsToTry) {
         try {
           console.log(`Attempting custom generation with model: ${model}`);
-          const response = await ai.models.generateContent({
+          const response = await generateContentWithRetry(ai, {
             model: model,
             contents: prompt,
             config: {
@@ -257,7 +277,7 @@ Features:
 
       // Tier 1: Try gemini-3.1-flash-lite-image
       try {
-        const response = await ai.models.generateContent({
+        const response = await generateContentWithRetry(ai, {
           model: "gemini-3.1-flash-lite-image",
           contents: {
             parts: [
@@ -287,7 +307,7 @@ Features:
         
         // Tier 2: Try gemini-3.1-flash-image
         try {
-          const fallbackResp = await ai.models.generateContent({
+          const fallbackResp = await generateContentWithRetry(ai, {
             model: "gemini-3.1-flash-image",
             contents: { parts: [{ text: fullPrompt }] },
             config: { imageConfig: { aspectRatio: "1:1" } }
@@ -315,10 +335,10 @@ Requirements:
 4. Include simple recognizable cute shapes representing "${userPrompt}".`;
 
             let svgResp = null;
-            for (const textModel of ["gemini-3.7-flash", "gemini-3.6-flash", "gemini-3.5-flash", "gemini-2.5-flash"]) {
+            for (const textModel of ["gemini-3.7-flash", "gemini-3.6-flash", "gemini-3.5-flash"]) {
               try {
                 console.log(`Attempting SVG outline generation with model: ${textModel}`);
-                svgResp = await ai.models.generateContent({
+                svgResp = await generateContentWithRetry(ai, {
                   model: textModel,
                   contents: svgPrompt,
                   config: { temperature: 0.3 }

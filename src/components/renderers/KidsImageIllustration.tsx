@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 interface KidsImageProps {
   emoji: string;
@@ -20,12 +20,25 @@ export const KidsImageIllustration: React.FC<KidsImageProps> = ({
   const [photoError, setPhotoError] = useState(false);
   const [svgError, setSvgError] = useState(false);
 
+  // RESET error states when search parameters change! (CRITICAL FIX FOR TOGGLING)
+  useEffect(() => {
+    setPhotoError(false);
+    setSvgError(false);
+  }, [usePhoto, word, emoji]);
+
   if (!emoji && !word) return null;
 
   // 1. Layer 1: Try Real HD Photograph (if usePhoto is enabled and word is provided)
   if (usePhoto && word && !photoError) {
-    const cleanWord = word.trim().split(' ')[0].split('/')[0].toLowerCase(); // Get first simple english word
-    // Curated high quality educational, isolated background search parameters
+    // Strip punctuation and split by spaces/slashes to get the single core keyword
+    const cleanWord = word
+      .replace(/[.,\/#!$%\^&\*;:{}=\-_`~()?]/g, "")
+      .trim()
+      .split(' ')[0]
+      .toLowerCase();
+
+    // Use a curated query parameter for isolated, white background kids-friendly images
+    // Removing referrerPolicy="no-referrer" to allow Unsplash's CDN to verify referrer and avoid 403 blocks
     const unsplashUrl = `https://images.unsplash.com/featured/300x300/?${encodeURIComponent(cleanWord)},isolated,kids`;
 
     return (
@@ -41,7 +54,6 @@ export const KidsImageIllustration: React.FC<KidsImageProps> = ({
           aspectRatio: '1/1',
           ...style 
         }}
-        referrerPolicy="no-referrer"
         onError={() => {
           console.warn(`Unsplash photo load failed for [${cleanWord}]. Falling back to vector illustration.`);
           setPhotoError(true);
