@@ -40,11 +40,21 @@ export async function generateAiBook(
 
     if (onProgress) onProgress('Creating Educational Pages & Activities...');
 
+    // 18-second AbortController timeout to prevent the loader from hanging at 92%
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => {
+      controller.abort();
+      console.warn('[AI Service] Generation request timed out after 18 seconds. Switching to instant educational templates.');
+    }, 18000);
+
     const response = await fetch('/api/generate-book', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ config })
+      body: JSON.stringify({ config }),
+      signal: controller.signal
     });
+    
+    clearTimeout(timeoutId);
 
     if (onProgress) onProgress('Writing Tracing Guides & Exercises...');
 

@@ -1,6 +1,7 @@
 import React from 'react';
 import { BookPage } from '../../types';
 import { BookOpen, Heart, Sparkles } from 'lucide-react';
+import { KidsImageIllustration } from './KidsImageIllustration';
 
 interface Props {
   page: BookPage;
@@ -18,7 +19,9 @@ export const StoryPageRenderer: React.FC<Props> = ({ page }) => {
           </div>
           <h2 className="text-xl font-black text-slate-900">{page.title}</h2>
         </div>
-        <span className="text-4xl">{page.imageEmoji || '📖'}</span>
+        <div className="w-12 h-12 flex items-center justify-center">
+          <KidsImageIllustration emoji={page.imageEmoji || '📖'} size={44} />
+        </div>
       </div>
 
       {/* Story Illustration & Character Chips */}

@@ -1,6 +1,7 @@
 import React from 'react';
 import { BookPage } from '../../types';
 import { Sparkles, CheckCircle2 } from 'lucide-react';
+import { KidsImageIllustration } from './KidsImageIllustration';
 
 interface Props {
   page: BookPage;
@@ -47,9 +48,9 @@ export const ActivityPageRenderer: React.FC<Props> = ({ page }) => {
             {objects.map((obj, i) => (
               <div
                 key={i}
-                className="w-14 h-14 rounded-2xl bg-amber-100/70 border border-amber-300 flex items-center justify-center text-3xl shadow-xs"
+                className="w-14 h-14 rounded-2xl bg-amber-100/70 border border-amber-300 flex items-center justify-center shadow-xs p-1"
               >
-                {obj}
+                <KidsImageIllustration emoji={obj} size={36} />
               </div>
             ))}
           </div>

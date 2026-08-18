@@ -59,7 +59,7 @@ export function getLocalFallbackBook(config: BookConfig): Book {
   if (config.category === 'custom' && config.customTopic) {
     rawItems = getGenericCustomPages(config.customTopic, config.pageCount);
   } else {
-    rawItems = getCategoryItems(config.category, config.pageCount);
+    rawItems = getCategoryItems(config);
   }
 
   const targetCount = Math.min(config.pageCount, rawItems.length > 0 ? rawItems.length : config.pageCount);
@@ -211,7 +211,9 @@ function getCategoryDisplayName(category: string, customTopic?: string): string 
   return map[category] || 'General Learning';
 }
 
-function getCategoryItems(category: string, requestedCount: number): any[] {
+function getCategoryItems(config: BookConfig): any[] {
+  const category = config.category;
+  const requestedCount = config.pageCount;
   let list: any[] = [];
   switch (category) {
     case 'alphabet':
@@ -243,6 +245,28 @@ function getCategoryItems(category: string, requestedCount: number): any[] {
       break;
     default:
       list = [...ALPHABET_DATA];
+  }
+
+  // Range filtering for alphabet, urdu-alphabet, or numbers if startRange/endRange are specified
+  if (config.startRange && config.endRange) {
+    const isNum = category.startsWith('numbers');
+    const startStr = String(config.startRange).toLowerCase().trim();
+    const endStr = String(config.endRange).toLowerCase().trim();
+
+    let startIndex = -1;
+    let endIndex = -1;
+
+    if (isNum) {
+      startIndex = list.findIndex(item => String(item.num || item.letter || '').trim() === startStr);
+      endIndex = list.findIndex(item => String(item.num || item.letter || '').trim() === endStr);
+    } else {
+      startIndex = list.findIndex(item => String(item.letter || '').toLowerCase().trim() === startStr);
+      endIndex = list.findIndex(item => String(item.letter || '').toLowerCase().trim() === endStr);
+    }
+
+    if (startIndex !== -1 && endIndex !== -1 && startIndex <= endIndex) {
+      return list.slice(startIndex, endIndex + 1);
+    }
   }
 
   if (requestedCount >= list.length) {
